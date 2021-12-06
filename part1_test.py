@@ -37,7 +37,7 @@ pcm = ax[1].pcolor(data2, norm=colors.LogNorm(vmin=3600, vmax=65535,
 fig.colorbar(pcm, ax = ax[1], extend = 'max')
 hdu = fits.PrimaryHDU(data2)
 hdul = fits.HDUList([hdu])
-#hdul.writeto('new7.fits')
+hdul.writeto('new7.fits')
 #%%
 data = hdulist[0].data
 mask = (3480<data) 
@@ -91,20 +91,45 @@ plt.imshow(difference, cmap='Greys_r')
 plt.show()
 
 #%%
+hdulist = fits.open("H:\Documents\Labs\Year_3\Astro_Imaging\A1_mosaic\A1_mosaic.fits")
 import pandas as pd
 plt.imshow(shuffled_masked_labels, cmap = 'Greys_r')
 regions = regionprops(shuffled_masked_labels)
 props = regionprops_table(shuffled_masked_labels, properties=('label',
                                                  'area',
-                                                 'perimeter','slice'))
+                                                 'perimeter','slice','bbox'))
 objects = pd.DataFrame(props)
-wrong = objects.nlargest(100, 'area')
-print(wrong.iloc[1]['slice'])
+wr = objects.nlargest(315, 'area')
+data_corr = hdulist[0].data
+for i in range(len(wr)):
+    data_corr[wr.iloc[i]['slice']] = 0
+data_corr = data_corr - 3600
+plt.imshow(data_corr)
+print(objects['bbox-0'])
 
+def newbounds(x1,x2,y1,y2):
+    width = (x2-x1)/4
+    newx2 = x2+width
+    newx1 = x1-width
+    height = (y2-y1)/4
+    newy2 = y2+height
+    newy1 = y1-height
+    return newx1,newx2,newy1,newy2
+for i in range(len(objects)):
+    x= objects['bbox-0'][i]
+    y= objects['bbox-1'][i]
+    z= objects['bbox-2'][i]
+    w= objects['bbox-3'][i]
+    objects['bbox-0'][i], objects['bbox-2'][i], objects['bbox-1'][i], objects['bbox-3'][i] = newbounds(x,z,y,w)
+a = objects['bbox-0']
+hdu = fits.PrimaryHDU(data_corr)
+hdul = fits.HDUList([hdu])
+#hdul.writeto('new7.fits')
 #%%
 hdu = fits.PrimaryHDU(shuffle_labels(labels_masked))
 hdul = fits.HDUList([hdu])
 hdul.writeto('new6.fits')
+
 
 #%%
 from skimage import feature
