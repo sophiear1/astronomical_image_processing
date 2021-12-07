@@ -92,21 +92,27 @@ plt.show()
 
 #%%
 hdulist = fits.open("H:\Documents\Labs\Year_3\Astro_Imaging\A1_mosaic\A1_mosaic.fits")
+#import data
 import pandas as pd
 plt.imshow(shuffled_masked_labels, cmap = 'Greys_r')
+plt.show()
 regions = regionprops(shuffled_masked_labels)
+#get region properties
 props = regionprops_table(shuffled_masked_labels, properties=('label',
                                                  'area',
                                                  'perimeter','slice','bbox'))
+#Find and remove the objects with the largest area -
 objects = pd.DataFrame(props)
 wr = objects.nlargest(315, 'area')
 data_corr = hdulist[0].data
 for i in range(len(wr)):
     data_corr[wr.iloc[i]['slice']] = 0
-data_corr = data_corr - 3600
-plt.imshow(data_corr)
-print(objects['bbox-0'])
-
+    
+#data_corr = data_corr - 3600
+plt.imshow(data_corr, cmap = 'Greys_r')
+plt.show()
+plt.imshow(data, cmap = 'Greys_r')
+plt.show()
 def newbounds(x1,x2,y1,y2):
     width = (x2-x1)/4
     newx2 = x2+width
@@ -114,17 +120,42 @@ def newbounds(x1,x2,y1,y2):
     height = (y2-y1)/4
     newy2 = y2+height
     newy1 = y1-height
-    return newx1,newx2,newy1,newy2
+    return int(newx1),int(newx2),int(newy1),int(newy2)
+expanded_bbox=np.empty([1974,4],np.int64())
 for i in range(len(objects)):
     x= objects['bbox-0'][i]
     y= objects['bbox-1'][i]
     z= objects['bbox-2'][i]
     w= objects['bbox-3'][i]
-    objects['bbox-0'][i], objects['bbox-2'][i], objects['bbox-1'][i], objects['bbox-3'][i] = newbounds(x,z,y,w)
-a = objects['bbox-0']
-hdu = fits.PrimaryHDU(data_corr)
-hdul = fits.HDUList([hdu])
-#hdul.writeto('new7.fits')
+    y1, y2, x1, x2 = newbounds(x,z,y,w)
+    expanded_bbox[i]=[x1,x2,y1,y2]
+    
+data_bbox = hdulist[0].data
+objslices = np.array(objects['slice'])
+zerotally=np.array([])
+all_source_brightness = np.array([])
+for i in range(len(expanded_bbox)):
+    region = data_bbox[expanded_bbox[i][0]:expanded_bbox[i][1],expanded_bbox[i][2]:expanded_bbox[i][3]]
+    eboxint = np.sum(region)
+    srcint = np.sum(data_bbox[objslices[i]])
+    if srcint == 0:
+        zerotally=np.append(zerotally,1)
+    if eboxint!=0:
+        source_size = data_bbox[objslices[i]].size
+        bkg = eboxint-srcint
+        bkg_size = len(region)*len(region[0])
+        area = bkg_size - source_size
+        source_brightness = srcint - (bkg/area)*source_size 
+        all_source_brightness = np.append(all_source_brightness, source_brightness)
+    
+
+        
+        
+   
+#%%
+header = hdulist[0].header
+callibration = header['MAGZPT']
+call_error = header['MAGZRR']
 #%%
 hdu = fits.PrimaryHDU(shuffle_labels(labels_masked))
 hdul = fits.HDUList([hdu])
