@@ -55,6 +55,7 @@ import skimage
 from skimage import segmentation, morphology, measure, exposure
 from scipy import ndimage as ndi
 from skimage.measure import label, regionprops, regionprops_table
+from skimage import filters
 def shuffle_labels(labels):
     indices = np.unique(labels[labels != 0])
     indices = np.append(
@@ -64,7 +65,7 @@ def shuffle_labels(labels):
     return indices[labels]
 file = gaussian_100
 data = file
-source_threshold = (5*10**-6)
+source_threshold = filters.threshold_isodata(data)#(5*10**-6)
 t = source_threshold
 thresholded = (data >= t) 
 distance = ndi.distance_transform_edt(thresholded)
@@ -78,6 +79,8 @@ labels_masked = segmentation.watershed(data,markers, mask = thresholded, connect
 shuffled_masked_labels = shuffle_labels(labels_masked)
 plt.imshow(shuffled_masked_labels)
 plt.show()
+
+#%%
 
 
 #%%
