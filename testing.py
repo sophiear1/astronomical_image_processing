@@ -1,9 +1,86 @@
 # -*- coding: utf-8 -*-
 """
-Created on Mon Dec 13 14:38:46 2021
+Created on Tue Dec 14 15:13:09 2021
 
 @author: sophi
+
 """
+import numpy as np
+from astropy.io import fits
+import matplotlib.pyplot as plt
+hdulist = fits.open("A1_mosaic.fits")
+data = hdulist[0].data
+x1 = np.linspace(0, len(data[0]), len(data[0])+1)
+y1= np.linspace(0, len(data), len(data)+1)
+
+def gauss2d(x,y,sig=1,x_mean=0,y_mean=0):
+    front = 1/(2*np.pi*(sig**2))
+    power = (((x-x_mean)**2)+((y - y_mean)**2))/(2*(sig**2))
+    g = front*np.exp(-1*power)
+    return g  
+
+print(gauss2d(1,1))
+print(gauss2d(-1, -1))
+print(gauss2d(0.5, 0.5))
+
+#%%
+
+x,y = np.meshgrid(x1, y1, sparse = True)
+
+gaussian_500 =np.empty([len(data),len(data[0])])
+for i in range(0,len(data)):
+    for j in range(0,len(data[0])):
+        gaussian_500[i][j] =gauss2d(x[0][j],y[i],sig = 500, x_mean = len(data[0])/2, y_mean = len(data)/2)
+
+plt.imshow(gaussian_500)
+plt.show()
+#%%
+gaussian_100 =np.empty([len(data),len(data[0])])
+for i in range(0,len(data)):
+    for j in range(0,len(data[0])):
+        gaussian_100[i][j] =gauss2d(x[0][j],y[i],sig = 100, x_mean = len(data[0])/2, y_mean = len(data)/2)
+
+plt.imshow(gaussian_100)
+plt.show()
+#%%
+from astropy.stats import sigma_clipped_stats
+from astropy.io import fits
+import numpy as np
+import scipy as sp
+import matplotlib.pyplot as plt
+import scipy.optimize as op
+import numpy.ma as ma
+import pandas as pd
+import skimage
+from skimage import segmentation, morphology, measure, exposure
+from scipy import ndimage as ndi
+from skimage.measure import label, regionprops, regionprops_table
+def shuffle_labels(labels):
+    indices = np.unique(labels[labels != 0])
+    indices = np.append(
+            [0],
+            np.random.permutation(indices)
+            )
+    return indices[labels]
+file = gaussian_100
+data = file
+source_threshold = (5*10**-6)
+t = source_threshold
+thresholded = (data >= t) 
+distance = ndi.distance_transform_edt(thresholded)
+local_maxima = morphology.local_maxima(distance)
+maxi_coords = np.nonzero(local_maxima)
+local_maxima = morphology.local_maxima(distance)
+maxi_coords = np.nonzero(local_maxima)
+markers = ndi.label(local_maxima)[0]
+labels = segmentation.watershed(data, markers)
+labels_masked = segmentation.watershed(data,markers, mask = thresholded, connectivity = 10)
+shuffled_masked_labels = shuffle_labels(labels_masked)
+plt.imshow(shuffled_masked_labels)
+plt.show()
+
+
+#%%
 from astropy.stats import sigma_clipped_stats
 from astropy.io import fits
 import numpy as np
@@ -41,14 +118,9 @@ def func(file, source_threshold, edges, connect, n_removed, points_min, points_m
     #n_removed = 315
     #points_min = 200
     #points_max = 1000
-    hdulist = fits.open(file)
-    header = hdulist[0].header
-    data = hdulist[0].data
     #data = data[100:-100,200:-200]
-    calibration = header['MAGZPT']
-    call_error = header['MAGZRR'] 
     t = source_threshold # Threshold for the watershed 
-    t2 = 3500 # Threshold for finding sources
+    t2 = source_threshold#3500 # Threshold for finding sources
     data1 = data
     thresholded = (data1 >= t)
     thresholded2 = (data1 >= t2)
@@ -96,7 +168,7 @@ def func(file, source_threshold, edges, connect, n_removed, points_min, points_m
             source_brightness = srcint - (bkg/area)*source_size 
             if source_brightness > 0:
                 all_source_brightness = np.append(all_source_brightness, source_brightness)  
-    magdata = calibration -2.5 * np.log10(all_source_brightness)
+    magdata = 0 -2.5 * np.log10(all_source_brightness)
     mag_sorted = np.sort(magdata)
     number = np.linspace(0, len(magdata),len(magdata)+1)
     cumulative = np.cumsum(number)
@@ -112,36 +184,3 @@ def func(file, source_threshold, edges, connect, n_removed, points_min, points_m
     plt.plot(x_straight, m*x_straight + b, c = 'red')
     plt.show()
 
-func(file = "A1_mosaic.fits", 
-     source_threshold = (3421+(13*3)),
-     edges = 'sobel',
-     connect = 20,
-     n_removed =80,
-     points_min = 100,
-     points_max = 600)  
-
-#%%
-#all egdes
-def binary(array):
-    for i in range(0, len(array)):
-        for j in range(0, len(array[0])):
-            if array[i][j] !=0:
-                array[i][j] = 1
-    return array
-
-x =sobel(data)
-#%%
-
-
-hdulist = fits.open("A1_mosaic.fits")
-header = hdulist[0].header
-data = hdulist[0].data
-from skimage.filters import sobel, scharr, prewitt, roberts, laplace, farid
-fig, ([ax0, ax1], [ax2, ax3], [ax4, ax5]) = plt.subplots(nrows = 3, ncols = 2)
-ax0.imshow(np.log10(sobel(data)-3200), cmap = 'Greys_r')
-ax1.imshow(scharr(data), cmap = 'Greys_r')
-ax2.imshow(prewitt(data), cmap = 'Greys_r')
-ax3.imshow(roberts(data), cmap = 'Greys_r')
-ax4.imshow(laplace(data), cmap = 'Greys_r')
-ax5.imshow(farid(data), cmap = 'Greys_r')
-plt.show()

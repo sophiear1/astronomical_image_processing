@@ -82,6 +82,9 @@ plt.imshow(data - bkg.background, norm=norm, origin='lower',
 plt.show()
 #%%
 from photutils.psf import IterativelySubtractedPSFPhotometry
+my_finder = 
+my_group_maker = 
+my_bkg_estimator = None
 my_photometry = IterativelySubtractedPSFPhotometry( 
     finder=my_finder, group_maker=my_group_maker,
     bkg_estimator=my_bkg_estimator, psf_model=my_psf_model,
