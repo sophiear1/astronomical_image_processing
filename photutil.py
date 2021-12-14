@@ -80,3 +80,13 @@ norm = ImageNormalize(stretch=SqrtStretch())
 plt.imshow(data - bkg.background, norm=norm, origin='lower',
             cmap='Greys_r', interpolation='nearest')
 plt.show()
+#%%
+from photutils.psf import IterativelySubtractedPSFPhotometry
+my_photometry = IterativelySubtractedPSFPhotometry( 
+    finder=my_finder, group_maker=my_group_maker,
+    bkg_estimator=my_bkg_estimator, psf_model=my_psf_model,
+    fitter=my_fitter, niters=3, fitshape=(7, 7)
+    # get photometry results
+photometry_results = my_photometry(image=my_image)
+# get residual image
+residual_image = my_photometry.get_residual_image()
