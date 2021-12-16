@@ -59,6 +59,8 @@ for i in range(0,len(data)):
 plt.imshow(gaussian_500)
 plt.show()
 #%%
+hdulist = fits.open("A1_mosaic.fits")
+data = hdulist[0].data
 
 x1 = np.linspace(1500, 2000, 500).astype(int)
 y1= np.linspace(1500, 2000, 500).astype(int)
@@ -67,8 +69,8 @@ x,y = np.meshgrid(x1, y1, sparse = True)
 
 gaussian_100 =np.empty([len(data),len(data[0])])
 for i in range(0, len(y)):
-    for j in range(0,len(x)):
-        gaussian_100[i+1500][j+1500] =gauss2d(x[0][j],y[i],sig = 50, x_mean = 250, y_mean = 250)
+    for j in range(0,len(x[0])):
+        gaussian_100[i+1500,j+1500] =gauss2d(x[0,j],y[i],sig = 50, x_mean = 1750, y_mean = 1750)
 
 plt.imshow(gaussian_100)
 plt.show()
