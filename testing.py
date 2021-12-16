@@ -19,34 +19,16 @@ def gauss2d(x,y,sig=1,x_mean=0,y_mean=0):
     g = front*np.exp(-1*power)
     return g  
 
+def deVs(I, r, R):
+    amp = I
+    power = -7.669*(((r/R)**(1/4))-1)
+    return amp * np.exp(power)
+
 print(gauss2d(1,1))
 print(gauss2d(-1, -1))
 print(gauss2d(0.5, 0.5))
 
-#%%
-def makeGaussian(size, fwhm = 3, center=None):
-    """ Make a square gaussian kernel.
-    size is the length of a side of the square
-    fwhm is full-width-half-maximum, which
-    can be thought of as an effective radius.
-    """
-    x,y = np.meshgrid(x1, y1, sparse = True)
-    #x = np.linspace(0, 2000, 2001)
-    #y = x[:,np.newaxis]
-    
-    if center is None:
-        x0 = y0 = size // 2
-    else:
-        x0 = center[0]
-        y0 = center[1]
-    
-    return gauss2d(x, y, sig = 100, x_mean = x0, y_mean = y0)
 
-g1 = makeGaussian(1000, fwhm = 500, center =[1000, 1000])
-empty=np.empty([len(data),len(data[0])])
-g1.resize(empty.shape)
-t1 = empty +g1
-plt.imshow(t1)
 #%%
 
 x,y = np.meshgrid(x1, y1, sparse = True)
@@ -74,6 +56,8 @@ for i in range(0, len(y)):
 
 plt.imshow(gaussian_100)
 plt.show()
+
+#%%
 #%%
 from astropy.stats import sigma_clipped_stats
 from astropy.io import fits
