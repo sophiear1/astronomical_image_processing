@@ -24,6 +24,30 @@ print(gauss2d(-1, -1))
 print(gauss2d(0.5, 0.5))
 
 #%%
+def makeGaussian(size, fwhm = 3, center=None):
+    """ Make a square gaussian kernel.
+    size is the length of a side of the square
+    fwhm is full-width-half-maximum, which
+    can be thought of as an effective radius.
+    """
+    x,y = np.meshgrid(x1, y1, sparse = True)
+    #x = np.linspace(0, 2000, 2001)
+    #y = x[:,np.newaxis]
+    
+    if center is None:
+        x0 = y0 = size // 2
+    else:
+        x0 = center[0]
+        y0 = center[1]
+    
+    return gauss2d(x, y, sig = 100, x_mean = x0, y_mean = y0)
+
+g1 = makeGaussian(1000, fwhm = 500, center =[1000, 1000])
+empty=np.empty([len(data),len(data[0])])
+g1.resize(empty.shape)
+t1 = empty +g1
+plt.imshow(t1)
+#%%
 
 x,y = np.meshgrid(x1, y1, sparse = True)
 
@@ -35,10 +59,16 @@ for i in range(0,len(data)):
 plt.imshow(gaussian_500)
 plt.show()
 #%%
+
+x1 = np.linspace(1500, 2000, 500).astype(int)
+y1= np.linspace(1500, 2000, 500).astype(int)
+
+x,y = np.meshgrid(x1, y1, sparse = True)
+
 gaussian_100 =np.empty([len(data),len(data[0])])
-for i in range(0,len(data)):
-    for j in range(0,len(data[0])):
-        gaussian_100[i][j] =gauss2d(x[0][j],y[i],sig = 100, x_mean = len(data[0])/2, y_mean = len(data)/2)
+for i in range(0, len(y)):
+    for j in range(0,len(x)):
+        gaussian_100[i+1500][j+1500] =gauss2d(x[0][j],y[i],sig = 50, x_mean = 250, y_mean = 250)
 
 plt.imshow(gaussian_100)
 plt.show()

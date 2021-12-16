@@ -98,7 +98,7 @@ def func(file, source_threshold, edges, connect, n_removed, points_min, points_m
                 all_source_brightness = np.append(all_source_brightness, source_brightness)  
     magdata = calibration -2.5 * np.log10(all_source_brightness)
     mag_sorted = np.sort(magdata)
-    number = np.linspace(0, len(magdata),len(magdata)+1)
+    number = np.linspace(0, len(magdata),len(magdata))
     cumulative = np.cumsum(number)
     x = mag_sorted
     y = np.log10(cumulative)
