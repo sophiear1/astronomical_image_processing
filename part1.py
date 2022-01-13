@@ -54,7 +54,7 @@ print(cov)
 counts_corr = counts
 peak = np.max(counts)
 loc = np.where(counts == peak)
-print(cou)
+print(counts_corr)
 #
 counts_corr[loc] = counts[np.asarray(loc) -1]
 par,cov = op.curve_fit(gauss, midpoints, counts_corr, p0 = [400000, 3420, 5, 0])

@@ -54,9 +54,9 @@ def shuffle_labels(labels):
             np.random.permutation(indices)
             )
     return indices[labels]
-data1 = hdulist[0].data
-
-t = 3600
+data2 = hdulist[0].data
+data1 = data2[500:4000,500:2000]
+t = 3480
 data = data1# 65535 - data1
 thresholded = (data1 >= t)
 
@@ -73,22 +73,25 @@ plt.show()
 
 markers = ndi.label(local_maxima)[0]
 labels = segmentation.watershed(data, markers)
-labels_masked = segmentation.watershed(data,markers, mask = thresholded, connectivity = 20)
+labels_masked = segmentation.watershed(data,markers, mask = thresholded, connectivity = 100)
 f, (axo,ax1,ax2) = plt.subplots(1,3)
 axo.imshow(thresholded,  cmap='Greys_r')
 ax1.imshow(np.log(1 + distance),  cmap='Greys_r')
-ax2.imshow(shuffle_labels(labels_masked),  cmap='magma')
+ax2.imshow(shuffle_labels(labels_masked), cmap='magma')
 plt.show()
 contours = measure.find_contours(shuffle_labels(labels_masked))
 plt.imshow(data1,  cmap='Greys_r')
 for c in contours:
     plt.plot(c[:,1],c[:,0], color = 'pink')
-#%%
+plt.show()
 shuffled_masked_labels = shuffle_labels(labels_masked)
+
 mask = shuffled_masked_labels >1
 difference = ma.array(data,mask=mask, fill_value=0)
 difference = difference.filled(0)
-
+hdu = fits.PrimaryHDU(difference)
+hdul = fits.HDUList([hdu])
+hdul.writeto('new9.fits')
 plt.imshow(difference, cmap='Greys_r')
 plt.show()
 
@@ -148,7 +151,7 @@ for i in range(len(expanded_bbox)):
     if eboxint<srcint:
         print(eboxint,srcint)
         print(objects['label'][i])
-    if srcint!=0:
+    if eboxint!=0:
         source_size = data_bbox[objslices[i]].size
         bkg = eboxint-srcint
         bkg_size = len(region)*len(region[0])
@@ -165,29 +168,44 @@ header = hdulist[0].header
 calibration = header['MAGZPT']
 call_error = header['MAGZRR']  
 magdata = calibration -2.5 * np.log10(all_source_brightness)
-mag_sorted = np.sort(magdata)
-number = np.linspace(0, len(magdata),len(magdata))
+mag_sorted_og = np.sort(magdata)
+number_og = np.linspace(0, len(magdata),len(magdata))
+mag_sorted= mag_sorted_og#[100:]
+number = number_og#[100:]
 cumulative = np.cumsum(number)
 x = mag_sorted
 y = np.log(cumulative)
 plt.scatter(x, y)
+
 plt.xlabel('magnitude')
 plt.ylabel('log(count)')
-x_straight = x[200:1000]
-y_straight = y[200:1000]
+x_straight = x[300:1400]
+y_straight = y[300:1400]
 m,b = np.polyfit(x_straight, y_straight, 1)
 print(m)
 plt.plot(x_straight, m*x_straight + b, c = 'red')
 plt.show()
+#%%
+objects = pd.DataFrame(props)
+wr = objects.nlargest(500, 'area')
+data_co = objects
+lab = np.array(wr['label'])
+for i in range(len(lab)-1):
+    data_co = data_co.drop(labels = lab[i])
+plt.hist(objects['bbox-0'], bins = 50)
+plt.hist(data_co['bbox-0'], bins = 50)
+plt.show()
 
 #%%
-header = hdulist[0].header
-callibration = header['MAGZPT']
-call_error = header['MAGZRR']
-#%%
-hdu = fits.PrimaryHDU(shuffle_labels(labels_masked))
-hdul = fits.HDUList([hdu])
-hdul.writeto('new6.fits')
+objects = pd.DataFrame(props)
+wr = objects.nlargest(500, 'area')
+data_c = objects
+labe = np.array(wr['label'])
+for i in range(len(labe) -1):
+    data_c = data_c.drop(labels = labe[i])
+plt.hist(objects['bbox-1'], bins = 100)
+plt.hist(data_c['bbox-1'], bins = 100)
+plt.show()
 
 
 #%%
@@ -195,5 +213,3 @@ from skimage import feature
 edges2 = feature.canny(data4, sigma=0.2)
 plt.imshow(edges2)
 plt.show()
-#%%
-plt.imshow(data4)

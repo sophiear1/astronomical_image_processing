@@ -44,20 +44,60 @@ plt.show()
 hdulist = fits.open("A1_mosaic.fits")
 data = hdulist[0].data
 
-x1 = np.linspace(1500, 2000, 500).astype(int)
-y1= np.linspace(1500, 2000, 500).astype(int)
+x1 = np.linspace(000, 2000, 2000).astype(int)
+y1= np.linspace(000, 2000, 2000).astype(int)
 
 x,y = np.meshgrid(x1, y1, sparse = True)
 
 gaussian_100 =np.empty([len(data),len(data[0])])
 for i in range(0, len(y)):
     for j in range(0,len(x[0])):
-        gaussian_100[i+1500,j+1500] =gauss2d(x[0,j],y[i],sig = 50, x_mean = 1750, y_mean = 1750)
+        gaussian_100[i,j] =gauss2d(x[0,j],y[i],sig = 200, x_mean = 1000, y_mean = 1000)
 
 plt.imshow(gaussian_100)
 plt.show()
 
 #%%
+import numpy.ma as ma
+hdulist = fits.open("A1_mosaic.fits")
+data = hdulist[0].data
+
+x1 = np.linspace(0,1000, 1000).astype(int)
+y1 = np.linspace(0, 1000, 1000).astype(int)
+x,y = np.meshgrid(x1, y1, sparse = True)
+empt = np.empty([len(data), len(data[0])])
+for i in range(0, len(y)):
+    for j in range(0, len(x[0])):
+        x0 = len(x1)/2
+        y0 = len(y1)/2
+        r = ((x[0,j]-x0)**2+(y[i]-y0)**2)**(1/2)
+        empt[i, j] = deVs(100, r, 100)
+#mask = (empt>50)
+e = empt #ma.array(empt,mask=mask, fill_value=0)
+plt.imshow(e)
+plt.show()
+#%%
+import numpy.ma as ma
+hdulist = fits.open("A1_mosaic.fits")
+data = hdulist[0].data
+
+x1 = np.linspace(0,1000, 1000).astype(int)
+y1 = np.linspace(0, 1000, 1000).astype(int)
+x,y = np.meshgrid(x1, y1, sparse = True)
+empt = np.empty([len(data), len(data[0])])
+for i in range(0, len(y1)):
+    for j in range(0, len(x1)):
+        x0 = len(x1)/2
+        y0 = len(y1)/2
+        r = ((x1[j]-x0)**2+(y1[i]-y0)**2)**(1/2)
+        empt[i, j] = deVs(50, r, 100)
+#mask = (empt<50)
+e = np.log(empt)#ma.array(empt,mask=mask, fill_value=0)
+
+plt.imshow(e)
+plt.show()
+
+
 #%%
 from astropy.stats import sigma_clipped_stats
 from astropy.io import fits
